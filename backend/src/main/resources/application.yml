@@ -33,25 +33,12 @@ spring:
           scheduler:
             instanceName: SchedulingSystemScheduler
             instanceId: AUTO
-          jobStore:
-            class: org.quartz.impl.jdbcjobstore.JobStoreTX
-            driverDelegateClass: org.quartz.impl.jdbcjobstore.PostgreSQLDelegate
-            tablePrefix: QRTZ_
-            isClustered: false
-            dataSource: quartzDataSource
-            useProperties: false
-          dataSource:
-            quartzDataSource:
-              provider: hikaricp
-              driver: org.postgresql.Driver
-              URL: ${DB_URL:jdbc:postgresql://localhost:5432/schedulingdb}
-              user: ${DB_USERNAME:scheduler}
-              password: ${DB_PASSWORD:scheduler123}
-              maxConnections: 5
           threadPool:
             class: org.quartz.simpl.SimpleThreadPool
             threadCount: 10
             threadPriority: 5
+          # JDBC-specific jobStore properties are set in QuartzJdbcConfig (@Profile !test)
+          # to avoid passing them to RAMJobStore during tests
 
 management:
   endpoints:
