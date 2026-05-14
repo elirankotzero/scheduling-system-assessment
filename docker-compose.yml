@@ -1,0 +1,75 @@
+services:
+
+  # -----------------------------------------------------------------------
+  # PostgreSQL Database
+  # -----------------------------------------------------------------------
+  db:
+    image: postgres:16-alpine
+    container_name: scheduling-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: schedulingdb
+      POSTGRES_USER: scheduler
+      POSTGRES_PASSWORD: scheduler123
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U scheduler -d schedulingdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - scheduling-net
+
+  # -----------------------------------------------------------------------
+  # Spring Boot Backend API
+  # -----------------------------------------------------------------------
+  backend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.backend
+    container_name: scheduling-backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/schedulingdb
+      DB_USERNAME: scheduler
+      DB_PASSWORD: scheduler123
+      SPRING_PROFILES_ACTIVE: default
+    ports:
+      - "8080:8080"
+    networks:
+      - scheduling-net
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # -----------------------------------------------------------------------
+  # React Frontend (Nginx)
+  # -----------------------------------------------------------------------
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.frontend
+    container_name: scheduling-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "3000:80"
+    networks:
+      - scheduling-net
+
+volumes:
+  postgres_data:
+
+networks:
+  scheduling-net:
+    driver: bridge

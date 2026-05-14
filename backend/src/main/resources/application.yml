@@ -1,0 +1,68 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: scheduling-api
+
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/schedulingdb}
+    username: ${DB_USERNAME:scheduler}
+    password: ${DB_PASSWORD:scheduler123}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+  quartz:
+    job-store-type: jdbc
+    jdbc:
+      initialize-schema: always
+    properties:
+      org:
+        quartz:
+          scheduler:
+            instanceName: SchedulingSystemScheduler
+            instanceId: AUTO
+          jobStore:
+            class: org.quartz.impl.jdbcjobstore.JobStoreTX
+            driverDelegateClass: org.quartz.impl.jdbcjobstore.PostgreSQLDelegate
+            tablePrefix: QRTZ_
+            isClustered: false
+            dataSource: quartzDataSource
+            useProperties: false
+          dataSource:
+            quartzDataSource:
+              provider: hikaricp
+              driver: org.postgresql.Driver
+              URL: ${DB_URL:jdbc:postgresql://localhost:5432/schedulingdb}
+              user: ${DB_USERNAME:scheduler}
+              password: ${DB_PASSWORD:scheduler123}
+              maxConnections: 5
+          threadPool:
+            class: org.quartz.simpl.SimpleThreadPool
+            threadCount: 10
+            threadPriority: 5
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+
+logging:
+  level:
+    com.scheduler: DEBUG
+    org.quartz: WARN
