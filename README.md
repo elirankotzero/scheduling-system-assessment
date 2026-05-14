@@ -26,8 +26,8 @@ A full-stack task scheduling application built with **Spring Boot**, **Quartz Sc
 ### Run the full stack
 
 ```bash
-git clone <repo-url>
-cd SchedulingSystem
+git clone https://github.com/elirankotzero/scheduling-system-assessment.git
+cd scheduling-system-assessment
 
 docker compose up --build
 ```
