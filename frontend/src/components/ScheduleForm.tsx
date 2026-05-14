@@ -28,9 +28,15 @@ export function ScheduleForm({ initial, onSubmit, onClose }: Props) {
   const [scheduleExpression, setScheduleExpression] = useState(initial?.scheduleExpression ?? '');
   const [dayOfWeek, setDayOfWeek] = useState<number>(initial?.dayOfWeek ?? 1);
   const [timeOfDay, setTimeOfDay] = useState(initial?.timeOfDay ?? '09:00');
-  const [scheduledAt, setScheduledAt] = useState(
-    initial?.scheduledAt ? initial.scheduledAt.substring(0, 16) : ''
-  );
+  const [scheduledAt, setScheduledAt] = useState(() => {
+    if (!initial?.scheduledAt) return '';
+    // Backend sends UTC string without 'Z'; add it so Date() parses as UTC,
+    // then convert to local time for the datetime-local input.
+    const utc = initial.scheduledAt.endsWith('Z') ? initial.scheduledAt : initial.scheduledAt + 'Z';
+    const d = new Date(utc);
+    const offset = d.getTimezoneOffset() * 60000;
+    return new Date(d.getTime() - offset).toISOString().substring(0, 16);
+  });
   const [parameters, setParameters] = useState<Record<string, string>>(
     (initial?.parameters as Record<string, string>) ?? {}
   );

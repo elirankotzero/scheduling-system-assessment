@@ -1,8 +1,12 @@
 import type { ScheduleStatus, ScheduleType, TaskType } from '../types';
 
+// Backend stores LocalDateTime in UTC (Docker container TZ = UTC).
+// Appending 'Z' tells the browser to treat the string as UTC so it
+// converts correctly to the user's local timezone for display.
 export function formatDate(dateStr?: string): string {
   if (!dateStr) return '—';
-  return new Date(dateStr).toLocaleString();
+  const utc = dateStr.endsWith('Z') || dateStr.includes('+') ? dateStr : dateStr + 'Z';
+  return new Date(utc).toLocaleString();
 }
 
 export function taskTypeLabel(t: TaskType): string {
