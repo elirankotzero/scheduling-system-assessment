@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.quartz.QuartzJobBean;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Date;
 
 @Slf4j
 public class EmailJob extends QuartzJobBean {
@@ -23,15 +25,23 @@ public class EmailJob extends QuartzJobBean {
         Long schedulingId = context.getMergedJobDataMap().getLong("schedulingId");
         String taskName = context.getMergedJobDataMap().getString("taskName");
 
-        // Simulated email sending — no real SMTP in this dummy implementation
         log.info("[EmailTask] Executing '{}' (id={}): Sending email to='{}', subject='{}'",
                 taskName, schedulingId, to, subject);
         log.info("[EmailTask] [SIMULATED] Email successfully dispatched to '{}'", to);
 
+        Date nextFireTime = context.getTrigger().getNextFireTime();
+
         schedulingRepository.findById(schedulingId).ifPresent(scheduling -> {
             scheduling.setLastExecutedAt(LocalDateTime.now());
+
+            // Refresh next execution time from the live trigger
+            scheduling.setNextExecutionAt(nextFireTime != null
+                    ? nextFireTime.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()
+                    : null);
+
             if ("ONE_TIME".equals(context.getMergedJobDataMap().getString("scheduleType"))) {
                 scheduling.setStatus(ScheduleStatus.COMPLETED);
+                scheduling.setNextExecutionAt(null);
             }
             schedulingRepository.save(scheduling);
         });

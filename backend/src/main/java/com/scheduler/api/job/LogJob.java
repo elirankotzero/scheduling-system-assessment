@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.quartz.QuartzJobBean;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Date;
 
 @Slf4j
 public class LogJob extends QuartzJobBean {
@@ -24,12 +26,19 @@ public class LogJob extends QuartzJobBean {
 
         log.info("[LogTask] Executing '{}' (id={}): {}", taskName, schedulingId, message);
 
-        // Update last executed time and status in DB
+        Date nextFireTime = context.getTrigger().getNextFireTime();
+
         schedulingRepository.findById(schedulingId).ifPresent(scheduling -> {
             scheduling.setLastExecutedAt(LocalDateTime.now());
-            // Mark ONE_TIME jobs as COMPLETED after execution
+
+            // Refresh next execution time from the live trigger
+            scheduling.setNextExecutionAt(nextFireTime != null
+                    ? nextFireTime.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()
+                    : null);
+
             if ("ONE_TIME".equals(context.getMergedJobDataMap().getString("scheduleType"))) {
                 scheduling.setStatus(ScheduleStatus.COMPLETED);
+                scheduling.setNextExecutionAt(null);
             }
             schedulingRepository.save(scheduling);
         });

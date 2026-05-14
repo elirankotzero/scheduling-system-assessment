@@ -14,20 +14,27 @@ export function Dashboard() {
   const [editTarget, setEditTarget] = useState<Scheduling | undefined>();
   const [deleteTarget, setDeleteTarget] = useState<Scheduling | undefined>();
 
-  const fetchAll = useCallback(async () => {
-    setLoading(true);
+  const fetchAll = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const data = await schedulesApi.getAll();
       setSchedules(data);
     } catch {
-      toast.error('Failed to load schedules');
+      if (!silent) toast.error('Failed to load schedules');
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, []);
 
+  // Initial load
   useEffect(() => {
     fetchAll();
+  }, [fetchAll]);
+
+  // Auto-refresh every 30 seconds (silent — no spinner or toast)
+  useEffect(() => {
+    const interval = setInterval(() => fetchAll(true), 30_000);
+    return () => clearInterval(interval);
   }, [fetchAll]);
 
   async function handleCreate(data: SchedulingRequest) {
@@ -92,7 +99,7 @@ export function Dashboard() {
               {activeCount} active · {schedules.length} total
             </span>
             <button
-              onClick={fetchAll}
+              onClick={() => fetchAll()}
               title="Refresh"
               className="p-2 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition"
             >
