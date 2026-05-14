@@ -214,16 +214,28 @@ Quartz natively supports pausing and resuming triggers, so those operations are 
 
 ## Use of AI Tools
 
-**Claude Code** (Anthropic) was utilized throughout this project to accelerate:
+This project was developed using a multi-model AI workflow to maximise efficiency and maintain full alignment with the assessment requirements.
 
+### Google Gemini
+Utilised for the **initial analysis** of the Home Assessment PDF. Gemini was used to:
+- Decompose the technical requirements into discrete implementation tasks.
+- Assist in architectural planning and technology selection.
+- Engineer the "Master Prompt" used to drive the implementation phase.
+
+### Claude Code (Anthropic)
+Utilised to **execute the implementation** based on the generated Master Prompt. This included:
 - **Boilerplate generation**: Spring Boot project structure, Maven `pom.xml`, Vite/React scaffolding, Tailwind configuration.
-- **Configuration**: Quartz JDBC properties, PostgreSQL datasource setup in `application.yml`, Nginx reverse-proxy config, Docker multi-stage builds.
+- **Configuration**: Quartz JDBC persistence setup, PostgreSQL datasource in `application.yml`, Nginx reverse-proxy config, Docker multi-stage builds.
 - **UI scaffolding**: Initial component skeletons for `ScheduleTable`, `ScheduleForm`, and `Dashboard`.
 
-**Business logic and architectural decisions were manually driven**, including:
+### Human-Driven Logic & Oversight
+While AI tools accelerated boilerplate and configuration generation, all core architectural decisions and business logic were manually driven and reviewed, including:
 
-- The choice to use Quartz JDBC persistence over in-memory for production reliability.
-- Parameter Schema as a database entity (bonus requirement) rather than an enum or code-level constant.
-- Two-layer validation strategy (backend + frontend).
-- The Nginx proxy approach to decouple frontend from backend host configuration.
-- Test profile design using H2 + in-memory Quartz to avoid infrastructure dependencies in CI.
+- Designing the **Parameter Schema as a dynamic DB entity** (Bonus Requirement) rather than a hard-coded enum.
+- Choosing **Quartz JDBC persistence** over in-memory for production reliability and future clustering support.
+- Implementing the **two-layer validation strategy** (Frontend enforcement + Backend enforcement).
+- Designing the **test profile** using H2 + in-memory Quartz to eliminate infrastructure dependencies in CI.
+- Structuring the Nginx reverse-proxy to fully decouple the frontend build from the backend host.
+
+### Final QA & Testing
+All unit and integration tests were executed and verified manually to ensure 100% compliance with the functional requirements. Edge cases (timezone handling, Quartz trigger lifecycle, parameter validation) were identified and resolved through manual review.
